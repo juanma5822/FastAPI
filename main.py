@@ -1,7 +1,6 @@
 #Python
-from msilib.schema import Class
+
 from typing import Optional
-from unicodedata import name
 
 #Pydantic
 from pydantic import BaseModel
