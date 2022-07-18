@@ -1,13 +1,14 @@
 #Python
 from msilib.schema import Class
 from typing import Optional
+from unicodedata import name
 
 #Pydantic
 from pydantic import BaseModel
 
 #FastAPI
 from fastapi import FastAPI, Query
-from fastapi import Body
+from fastapi import Body,Path
 
 app = FastAPI()
 
@@ -37,11 +38,31 @@ def create_person(person: Person = Body(...)):
 
 @app.get("/person/detail")
 def show_person(
-    name: Optional[str] = Query(None,min_length=1,max_length=25),
-    age: Optional[int] = Query(...)
+    name: Optional[str] = Query(
+        None,
+        min_length=1,
+        max_length=25,
+        title="Person Name",
+        description="This is the person name. It's between 1 and 25 characters"
+        ),
+    age: Optional[int] = Query(
+        ...,
+        title="Person Age",
+        description="This is the person age. It's required"
+        )
 
 ):
     return {name: age}
 
-def Juan():
-    pass
+#Validations: Path Parameters
+
+@app.get("/person/detail/{person_id}")
+def show_person(
+    person_id: int = Path(
+        ...,
+        gt=0,
+        title="Person ID",
+        description="This is Person ID. It's required"
+        )
+):
+	return {person_id: "It exist!"}
