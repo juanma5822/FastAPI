@@ -42,3 +42,6 @@ def show_person(
 
 ):
     return {name: age}
+
+def Juan():
+    pass
