@@ -12,6 +12,10 @@ from fastapi import Body,Path
 app = FastAPI()
 
 #Models
+class Location(BaseModel):
+    city: str
+    state: str
+    country: str
 
 class Person(BaseModel):
     first_name: str
@@ -30,7 +34,7 @@ def home():
 
 @app.post("/person/new")
 def create_person(person: Person = Body(...)):
-    return person 
+    return person
 
 
 # Validations: Query Parameters
@@ -65,3 +69,22 @@ def show_person(
         )
 ):
 	return {person_id: "It exist!"}
+
+# Validations: Request Body
+
+@app.put("/person/{person_id}")
+def update_person(
+    person_id:int = Path(
+        ...,
+        title="Person ID",
+        description="This is Person ID",
+        gt=0
+    ),
+    person: Person = Body(...),
+    Location: Location = Body(...)
+):
+
+    result = person.dict()
+    result.update(Location.dict())
+    return result
+
