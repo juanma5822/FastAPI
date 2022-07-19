@@ -43,7 +43,7 @@ class Location(BaseModel):
         example= "Colombia"
     )
 
-class Person(BaseModel):
+class PersonBase(BaseModel):
     first_name: str = Field(
         ...,
         min_length=1,
@@ -68,41 +68,18 @@ class Person(BaseModel):
         description="here put your email",
         example= "juan@gmail.com"
     )    
+    hair_color: Optional[Hair_color] = Field(default=None)
+    is_married: Optional[bool] = Field(default=None)
+
+class Person(PersonBase):    
     password: str = Field(
         ...,
         min_length=8,
         example="hfumkf669"
         )
-    hair_color: Optional[Hair_color] = Field(default=None)
-    is_married: Optional[bool] = Field(default=None)
-
-class PersonOut(BaseModel):
-    first_name: str = Field(
-        ...,
-        min_length=1,
-        max_length=25,
-        example="Juan"
-        )
-    last_name: str = Field(
-        ...,
-        min_length=1,
-        max_length=25,
-        example="Romero"
-        )
-    age: int = Field(
-        ...,
-        gt=17,
-        le=70,
-        example= 28
-        )
-    email: EmailStr = Field(
-        ...,
-        title="Email",
-        description="here put your email",
-        example= "juan@gmail.com"
-    )    
-    hair_color: Optional[Hair_color] = Field(default=None)
-    is_married: Optional[bool] = Field(default=None)
+    
+class PersonOut(PersonBase):
+    pass    
 
 class Payment(BaseModel):
     card_number: PaymentCardNumber = Field(
@@ -125,13 +102,14 @@ class Payment(BaseModel):
     def brand_card(self) -> PaymentCardBrand:
         return self.card_number.brand
 
+
 @app.get("/") # path operation decorator
 def home():
     return {"Hello": "World"}
 
 # Request and Response Body
 
-@app.post("/person/new",response_model=PersonOut("ajuan","jdjsld",29,"lsjdks@jfjkdj.com","black",True,))
+@app.post("/person/new",response_model=PersonOut)
 def create_person(
     person: Person = Body(...),
     location: Location = Body(...),
