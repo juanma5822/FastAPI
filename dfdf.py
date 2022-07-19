@@ -1,178 +1,140 @@
-"""
-Program: Reto 1; uso de tipos de datos exóticos.
+#Python
+from os import stat
+from typing import Optional
+from enum import Enum
 
-Description: Simulación de endpoint encargado de registrar una compra en una tienda online.
-
-Author: Jose Noriega <josenoriega723@gmail.com>
-
-Last Update: 2021-10-26 
-
-"""
-
-import re
-from datetime import date
-from typing import Dict
-from typing import Any
-
-# Pydantic
+#Pydantic
 from pydantic import BaseModel
 from pydantic import Field
-from pydantic import EmailStr
-from pydantic import PaymentCardNumber
-from pydantic.validators import str_validator
-from pydantic.types import PaymentCardBrand
 
-# Fast API
+#FastAPI
 from fastapi import FastAPI
-from fastapi import Body
-
+from fastapi import status
+from fastapi import Body, Query, Path
 
 app = FastAPI()
 
-PHONE_REGEXP = re.compile(r'^\+?[0-9]{1,3}?[0-9]{6,14}$')
-
-# Custom Types
-
-
-class PhoneNumber(str):
-    """Phone number type"""
-
-    @classmethod
-    def __get_validators__(cls) -> Dict[str, Any]:
-        yield str_validator
-        yield cls.validate
-
-    @classmethod
-    def __modify_schema__(cls, field_schema: Dict[str, Any]) -> None:
-        field_schema.update(
-            pattern=r'^\+?[0-9]+$',
-            example=['+541112345678'],
-            format='phone-number',
-        )
-
-    @classmethod
-    def validate(cls, value: str) -> str:
-        if not isinstance(value, str):
-            raise TypeError('Phone number must be a string')
-
-        match = PHONE_REGEXP.search(value)
-
-        if not match:
-            raise ValueError('Phone number must be a valid phone number')
-
-        return value
-
-    def __repr__(self) -> str:
-        return f'PhoneNumber({super().__repr__()})'
-
-
 # Models
 
+class HairColor(Enum): 
+    white = "white"
+    brown = "brown"
+    black = "black"
+    blonde = "blonde"
+    red = "red"
 
-class Person(BaseModel):
-    name: str = Field(...,
-                      min_length=2,
-                      max_length=50,
-                      title='Name',
-                      description='The name of the person that will receive the package.',
-                      example='John Doe')
+class Location(BaseModel): 
+    city: str
+    state: str
+    country: str
 
-    email: EmailStr = Field(...,
-                            title='Email',
-                            description='The email of the person that will receive the package.')
+class PersonBase(BaseModel):
+    first_name: str = Field(
+        ..., 
+        min_length=1,
+        max_length=50,
+        example="Miguel"
+        )
+    last_name: str = Field(
+        ..., 
+        min_length=1,
+        max_length=50,
+        example="Torres"
+        )
+    age: int = Field(
+        ...,
+        gt=0,
+        le=115,
+        example=25
+    )
+    hair_color: Optional[HairColor] = Field(default=None, example=HairColor.black)
+    is_married: Optional[bool] = Field(default=None, example=False)
 
-    phone: PhoneNumber = Field(...,
-                               title='Phone',
-                               description='The phone number of the person that will receive the package.')
+class Person(PersonBase): 
+    password: str = Field(..., min_length=8)
 
+    # class Config: 
+    #     schema_extra = {
+    #         "example": {
+    #             "first_name": "Facundo",
+    #             "last_name": "García Martoni",
+    #             "age": 21, 
+    #             "hair_color": "blonde",
+    #             "is_married": False
+    #         }
+    #     }
 
-class Product(BaseModel):
-    """Product model"""
+class PersonOut(PersonBase): 
+    pass
 
-    name: str = Field(...,
-                      min_length=2,
-                      max_length=50,
-                      title='Name',
-                      description='The name of the product.',
-                      example='Laptop')
+@app.get(
+    path="/", 
+    status_code=status.HTTP_200_OK
+    )
+def home(): 
+    return {"Hello": "World"}
 
+# Request and Response Body
 
-class PaymentMethod(BaseModel):
-    """Payment method model"""
+@app.post(
+    path="/person/new", 
+    response_model=PersonOut,
+    status_code=status.HTTP_201_CREATED
+    )
+def create_person(person: Person = Body(...)): 
+    return person
 
-    card_number: PaymentCardNumber = Field(...,
-                                      title='Number',
-                                      description='The number of the payment card.',
-                                      example='1234567890123456')
+# Validaciones: Query Parameters
 
-    expiration_month: int = Field(...,
-                                  title='Expiration month',
-                                  description='The expiration month of the payment card.',
-                                  ge=1,
-                                  le=12,
-                                  example=12)
+@app.get(
+    path="/person/detail",
+    status_code=status.HTTP_200_OK
+    )
+def show_person(
+    name: Optional[str] = Query(
+        None,
+        min_length=1, 
+        max_length=50,
+        title="Person Name",
+        description="This is the person name. It's between 1 and 50 characters",
+        example="Rocío"
+        ),
+    age: str = Query(
+        ...,
+        title="Person Age",
+        description="This is the person age. It's required",
+        example=25
+        )
+): 
+    return {name: age}
 
-    expiration_year: int = Field(...,
-                                 title='Expiration year',
-                                 description='The expiration year of the payment card.')
+# Validaciones: Path Parameters
 
-    @property
-    def brand(self) -> PaymentCardBrand:
-        """Returns the brand of the payment card"""
-        return self.card_number.brand
+@app.get("/person/detail/{person_id}")
+def show_person(
+    person_id: int = Path(
+        ..., 
+        gt=0,
+        example=123
+        )
+): 
+    return {person_id: "It exists!"}
 
-    @property
-    def expired(self) -> bool:
-        """Returns if the payment card is expired"""
+# Validaciones: Request Body
 
-        today = date.today()
-        expiration_date = date(year=self.expiration_year,
-                               month=self.expiration_month,
-                               day=1)
-
-        return today < expiration_date
-
-
-class Address(BaseModel):
-    """Address model"""
-
-    street: str = Field(...,
-                        min_length=2,
-                        max_length=50,
-                        title='Street',
-                        description='The street of the address.')
-
-    city: str = Field(...,
-                      min_length=2,
-                      max_length=50,
-                      title='City',
-                      description='The city of the address.')
-
-    country: str = Field(...,
-                         min_length=2,
-                         max_length=50,
-                         title='Country',
-                         description='The country of the address.')
-
-# Endpoints
-
-@app.post('/order')
-def add_order(
+@app.put("/person/{person_id}")
+def update_person(
+    person_id: int = Path(
+        ...,
+        title="Person ID",
+        description="This is the person ID",
+        gt=0,
+        example=123
+    ),
     person: Person = Body(...),
-    product: Product = Body(...),
-    address: Address = Body(...),
-    payment_method: PaymentMethod = Body(...,)
-):
-    """Registers a new order"""
-
-    return {
-        'person': person,
-        'product': product,
-        'address': address,
-        'payment_method': {
-            'brand': payment_method.brand,
-            'last4': payment_method.card_number.last4,
-            'mask': payment_method.card_number.masked,
-            'expired': payment_method.expired,
-        }
-    }
+    #location: Location = Body(...)
+): 
+    #results = person.dict()
+    #results.update(location.dict())
+    #return results
+    return person

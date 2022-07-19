@@ -10,6 +10,7 @@ from pydantic import Field
 
 #FastAPI
 from fastapi import FastAPI
+from fastapi import status
 from fastapi import Body,Query,Path
 
 app = FastAPI()
@@ -43,7 +44,7 @@ class Location(BaseModel):
         example= "Colombia"
     )
 
-class Person(BaseModel):
+class PersonBase(BaseModel):
     first_name: str = Field(
         ...,
         min_length=1,
@@ -68,41 +69,18 @@ class Person(BaseModel):
         description="here put your email",
         example= "juan@gmail.com"
     )    
+    hair_color: Optional[Hair_color] = Field(default=None)
+    is_married: Optional[bool] = Field(default=None)
+
+class Person(PersonBase):    
     password: str = Field(
         ...,
         min_length=8,
         example="hfumkf669"
         )
-    hair_color: Optional[Hair_color] = Field(default=None)
-    is_married: Optional[bool] = Field(default=None)
-
-class PersonOut(BaseModel):
-    first_name: str = Field(
-        ...,
-        min_length=1,
-        max_length=25,
-        example="Juan"
-        )
-    last_name: str = Field(
-        ...,
-        min_length=1,
-        max_length=25,
-        example="Romero"
-        )
-    age: int = Field(
-        ...,
-        gt=17,
-        le=70,
-        example= 28
-        )
-    email: EmailStr = Field(
-        ...,
-        title="Email",
-        description="here put your email",
-        example= "juan@gmail.com"
-    )    
-    hair_color: Optional[Hair_color] = Field(default=None)
-    is_married: Optional[bool] = Field(default=None)
+    
+class PersonOut(PersonBase):
+    pass    
 
 class Payment(BaseModel):
     card_number: PaymentCardNumber = Field(
@@ -125,19 +103,33 @@ class Payment(BaseModel):
     def brand_card(self) -> PaymentCardBrand:
         return self.card_number.brand
 
-@app.get("/") # path operation decorator
+
+@app.get(
+    path="/",
+    status_code=status.HTTP_200_OK
+    ) # path operation decorator
 def home():
     return {"Hello": "World"}
 
 # Request and Response Body
 
-@app.post("/person/new",responses=PersonOut)
+@app.post(
+    path="/person/new",
+    response_model=PersonOut,
+    status_code=status.HTTP_201_CREATED
+    )
 def create_person(
-    person: Person = Body(...),
+    person: Person = Body(...,)
+    ):
+    return person
+
+@app.post(path="/person/new",status_code=status.HTTP_201_CREATED)
+def create_person1(
+    person: Person = Body(...,),
     location: Location = Body(...),
     payment: Payment = Body(...)
 ):
-    return {
+     return {
         "person" : person,
         "location" : location,
         "payment" : {
@@ -146,11 +138,12 @@ def create_person(
             "maskk": payment.card_number.masked,
         }
     }
-        
 
 # Validations: Query Parameters
 
-@app.get("/person/detail")
+@app.get(
+    path="/person/detail",
+    status_code=status.HTTP_200_OK)
 def show_person(
     name: Optional[str] = Query(
         None,
@@ -206,6 +199,3 @@ def update_person(
         "person_id" : person_id,
         "result" : result
     }
-        
-    
-
