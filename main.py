@@ -71,7 +71,6 @@ class Person(BaseModel):
     hair_color: Optional[Hair_color] = Field(default=None)
     is_married: Optional[bool] = Field(default=None)
     
-
 class Payment(BaseModel):
     card_number: PaymentCardNumber = Field(
         ...,
@@ -92,8 +91,6 @@ class Payment(BaseModel):
     @property
     def brand_card(self) -> PaymentCardBrand:
         return self.card_number.brand
-
-
 
 @app.get("/") # path operation decorator
 def home():
@@ -118,7 +115,6 @@ def create_person(
     }
         
 
-
 # Validations: Query Parameters
 
 @app.get("/person/detail")
@@ -128,12 +124,14 @@ def show_person(
         min_length=1,
         max_length=25,
         title="Person Name",
-        description="This is the person name. It's between 1 and 25 characters"
+        description="This is the person name. It's between 1 and 25 characters",
+        example= "Juan"
         ),
     age: Optional[int] = Query(
         ...,
         title="Person Age",
-        description="This is the person age. It's required"
+        description="This is the person age. It's required",
+        example=25
         )
 
 ):
@@ -147,7 +145,8 @@ def show_person(
         ...,
         gt=0,
         title="Person ID",
-        description="This is Person ID. It's required"
+        description="This is Person ID. It's required",
+        example= 4548
         )
 ):
 	return {person_id: "It exist!"}
