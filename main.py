@@ -1,9 +1,11 @@
 #Python
 
 from typing import Optional
+from enum import Enum
 
 #Pydantic
 from pydantic import BaseModel
+from pydantic import Field
 
 #FastAPI
 from fastapi import FastAPI, Query
@@ -12,18 +14,37 @@ from fastapi import Body,Path
 app = FastAPI()
 
 #Models
+
+class Hair_color(Enum):
+    white= "white"
+    brown = "brown"
+    black = "black"
+    blonde = "blonde"
+    red = "red"
+
 class Location(BaseModel):
     city: str
     state: str
     country: str
 
 class Person(BaseModel):
-    first_name: str
-    last_name: str
-    age: int
-    hair_color: Optional[str] = None
-    is_married: Optional[bool] = None
-
+    first_name: str = Field(
+        ...,
+        min_length=1,
+        max_length=25
+        )
+    last_name: str = Field(
+        ...,
+        min_length=1,
+        max_length=25
+        )
+    age: int = Field(
+        ...,
+        gt=17,
+        le=70
+        )
+    hair_color: Optional[Hair_color] = Field(default=None)
+    is_married: Optional[bool] = Field(default=None)
 
 
 @app.get("/") # path operation decorator
