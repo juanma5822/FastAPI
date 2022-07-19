@@ -131,7 +131,7 @@ def home():
 
 # Request and Response Body
 
-@app.post("/person/new",responses=PersonOut)
+@app.post("/person/new",response_model=PersonOut("ajuan","jdjsld",29,"lsjdks@jfjkdj.com","black",True,))
 def create_person(
     person: Person = Body(...),
     location: Location = Body(...),
@@ -206,6 +206,3 @@ def update_person(
         "person_id" : person_id,
         "result" : result
     }
-        
-    
-
