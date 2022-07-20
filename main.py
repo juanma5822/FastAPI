@@ -8,9 +8,10 @@ from pydantic.types import PaymentCardBrand
 from pydantic import Field
 
 #FastAPI
-from fastapi import FastAPI, File, Form, Header,Cookie, UploadFile
+from fastapi import FastAPI
 from fastapi import status
-from fastapi import Body,Query,Path
+from fastapi import HTTPException
+from fastapi import Body,Query,Path,File, Form, Header,Cookie, UploadFile
 
 app = FastAPI()
 
@@ -164,17 +165,22 @@ def show_person(
 
 #Validations: Path Parameters
 
+persons = [1, 2, 3, 4, 5]
+
 @app.get("/person/detail/{person_id}")
 def show_person(
     person_id: int = Path(
-        ...,
+        ..., 
         gt=0,
-        title="Person ID",
-        description="This is Person ID. It's required",
-        example= 4548
+        example=123
         )
-):
-	return {person_id: "It exist!"}
+): 
+    if person_id not in persons: 
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="¡This person doesn't exist!"
+        )
+    return {person_id: "It exists!"}
 
 # Validations: Request Body
 
