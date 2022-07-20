@@ -8,7 +8,7 @@ from pydantic.types import PaymentCardBrand
 from pydantic import Field
 
 #FastAPI
-from fastapi import FastAPI, Form, Header,Cookie
+from fastapi import FastAPI, File, Form, Header,Cookie, UploadFile
 from fastapi import status
 from fastapi import Body,Query,Path
 
@@ -229,7 +229,15 @@ def contact(
     message: str = Form(...,min_length=20),
     user_agent: Optional[str] = Header(default=None),
     ads: Optional[str] = Cookie(default=None)
-
-
 ):
     return user_agent
+
+@app.post(path="/post-image")
+def post_image(
+    image:UploadFile = File(...)
+):
+    return {
+        "Filename" : image.filename,
+        "Format" : image.content_type,
+        "Size(kb)" : round(len(image.file.read())/1024,ndigits=2)
+    }
