@@ -1,5 +1,6 @@
 #Python
 
+from email import message
 from typing import Optional
 from enum import Enum
 
@@ -9,7 +10,7 @@ from pydantic.types import PaymentCardBrand
 from pydantic import Field
 
 #FastAPI
-from fastapi import FastAPI
+from fastapi import FastAPI, Form
 from fastapi import status
 from fastapi import Body,Query,Path
 
@@ -103,9 +104,15 @@ class Payment(BaseModel):
     def brand_card(self) -> PaymentCardBrand:
         return self.card_number.brand
 
+class LoginOut(BaseModel):
+    username: str = Field(
+        ...,
+        max_length=20,
+        #example= "Juan5822"
+        )
+    message: str = Field(default="Login Succesfully")    
 
-@app.get(
-    path="/",
+@app.get(path="/",
     status_code=status.HTTP_200_OK
     ) # path operation decorator
 def home():
@@ -113,8 +120,7 @@ def home():
 
 # Request and Response Body
 
-@app.post(
-    path="/person/new",
+@app.post(path="/person/new",
     response_model=PersonOut,
     status_code=status.HTTP_201_CREATED
     )
@@ -141,8 +147,7 @@ def create_person1(
 
 # Validations: Query Parameters
 
-@app.get(
-    path="/person/detail",
+@app.get(path="/person/detail",
     status_code=status.HTTP_200_OK)
 def show_person(
     name: Optional[str] = Query(
@@ -199,3 +204,13 @@ def update_person(
         "person_id" : person_id,
         "result" : result
     }
+
+@app.post(path="/login",
+    response_model=LoginOut,
+    status_code=status.HTTP_200_OK
+)
+def login(
+    username:str = Form(...),
+    password: str = Form(...)
+):
+    return LoginOut(username = username)
