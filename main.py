@@ -1,7 +1,7 @@
 #Python
 from typing import Optional
-from enum import Enum
 
+from personbase import PersonBase
 #Pydantic
 from pydantic import BaseModel, EmailStr, PaymentCardNumber
 from pydantic.types import PaymentCardBrand
@@ -17,12 +17,6 @@ app = FastAPI()
 
 #Models
 
-class Hair_color(Enum):
-    white= "white"
-    brown = "brown"
-    black = "black"
-    blonde = "blonde"
-    red = "red"
 
 class Location(BaseModel):
     city: str = Field(
@@ -43,34 +37,6 @@ class Location(BaseModel):
         max_length=30,
         example= "Colombia"
     )
-
-class PersonBase(BaseModel):
-    first_name: str = Field(
-        ...,
-        min_length=1,
-        max_length=25,
-        example="Juan"
-        )
-    last_name: str = Field(
-        ...,
-        min_length=1,
-        max_length=25,
-        example="Romero"
-        )
-    age: int = Field(
-        ...,
-        gt=17,
-        le=70,
-        example= 28
-        )
-    email: EmailStr = Field(
-        ...,
-        title="Email",
-        description="here put your email",
-        example= "juan@gmail.com"
-    )    
-    hair_color: Optional[Hair_color] = Field(default=None)
-    is_married: Optional[bool] = Field(default=None)
 
 class Person(PersonBase):
     password: str = Field(
@@ -112,7 +78,7 @@ class LoginOut(BaseModel):
     tags=["Home"]
     ) # path operation decorator
 def home():
-    return {"Hello": "World"}
+    return {"Hello": "Laura unicornia"}
 
 # Request and Response Body
 
@@ -132,7 +98,7 @@ def create_person(person: Person = Body(...,)):
 
      -Request body parameter:
         - **person: Person** -> A person mode whit first name, lastname, age , hair color and marital status
-        
+
     Return a person model    
     """
     return person
@@ -160,7 +126,8 @@ def create_person1(
 
 @app.get(path="/person/detail",
     status_code=status.HTTP_200_OK,
-    tags=["Persons"]
+    tags=["Persons"],
+    deprecated=True
     )
 def show_person(
     name: Optional[str] = Query(
